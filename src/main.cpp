@@ -17,6 +17,7 @@ const int photoSensorPin = 35;
 
 // Define the pin for the MQ2 sensor
 #define MQ2_PIN 34
+#define BUZZER_PIN 27
 
 
 /************************ Hardware Related Macros ****************************/
@@ -44,6 +45,7 @@ void setup() {
 
   // Initialize the photo sensor pin as input
   pinMode(photoSensorPin, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
 
   // Initialize the MQ2 sensor
   MQ2.setRegressionMethod(1); // Set regression method to linear
@@ -83,6 +85,12 @@ void loop() {
   Serial.print("LPG concentration: ");
   Serial.print(LPG);
   Serial.println(" ppm");
+
+  if (LPG < 10) {
+    digitalWrite(BUZZER_PIN, HIGH);
+  } else {
+    digitalWrite(BUZZER_PIN, LOW);
+  }
 
   float temperature = dht.getTemperature();
   float humidity = dht.getHumidity();
