@@ -80,16 +80,16 @@ void loop() {
   delay(dht.getMinimumSamplingPeriod());
   MQ2.update();
 
-  float LPG = MQ2.readSensor(); // Read LPG concentration in ppm
+  float CO = MQ2.readSensor(); // Read LPG concentration in ppm
 
-  Serial.print("LPG concentration: ");
-  Serial.print(LPG);
-  Serial.println(" ppm");
+  Serial.print("CO concentration: ");
+  Serial.print(CO);
+  Serial.println(" ppm (parts per million)");
 
-  if (LPG < 10) {
-    digitalWrite(BUZZER_PIN, HIGH);
+  if (CO < 10) {
+    analogWrite(BUZZER_PIN, 5);
   } else {
-    digitalWrite(BUZZER_PIN, LOW);
+    analogWrite(BUZZER_PIN, LOW);
   }
 
   float temperature = dht.getTemperature();
