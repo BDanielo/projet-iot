@@ -40,3 +40,6 @@ Ce projet est un détecteur de fumée intelligent basé sur l'ESP32, intégrant 
 
 4. **Configurer MQTT et Node-RED** :
    - Configurez un broker MQTT et connectez Node-RED pour recevoir et traiter les données des capteurs.
+
+## 🔧 **Schéma du Circuit**
+![Schéma du Circuit](./diapo/Circuit%20iot.png)
