@@ -1,6 +1,13 @@
 #include <Arduino.h>
 #include "DHTesp.h" // Click here to get the library: http://librarymanager/All#DHTesp
 #include <MQUnifiedsensor.h>
+#include <Wifi.h>
+#include <WebServer.h>
+#include <PubSubClient.h>
+
+// Wifi parameters
+const char* ssid = "Xiaomi11TPro";
+const char* password = "1234567890";
 
 // Define the DHT sensor type and the data pin
 #define DHT_PIN 26
@@ -29,8 +36,28 @@ const int photoSensorPin = 35;
 
 MQUnifiedsensor MQ2(Board, Voltage_Resolution, ADC_Bit_Resolution, Pin, Type);
 
+WebServer server(80); // Start the server on port 80
+
+// MQTT Broker settings
+const char* mqtt_server = "broker.hivemq.com";
+const int mqtt_port = 1883;
+const char* mqtt_user = ""; // Not required for public brokers
+const char* mqtt_password = ""; // Not required for public brokers
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
 unsigned long previousMillis = 0;
 unsigned long interval;
+
+int LedColorRed = 0;
+int LedColorGreen = 0;
+int LedColorBlue = 0;
+
+char dht22Values[32];
+char mq2Values[32];
+
+unsigned long coValue = 0;
 
 void setUpMQ2() {
   // Initialize the MQ2 sensor
@@ -66,7 +93,7 @@ void readPhotoSensorValues() {
   // Read the value from the photo sensor
   int photoSensorValue = analogRead(photoSensorPin);
   Serial.println("Photo sensor value: " + String(map(photoSensorValue, 2000, 0, 0, 100)) + " %");
-
+  client.publish("danielo/lumen", String(photoSensorValue).c_str());
 }
 
 int readDHT22Values() {
@@ -85,29 +112,181 @@ int readDHT22Values() {
 }
 
 void setLedRGBColor(int humidity) {
-  int redValue = map(humidity, 50, 100, 0, 255);
-  int greenValue = map(humidity, 50, 100, 255, 0);
-  int blueValue = 0; 
+  LedColorRed = map(humidity, 50, 100, 0, 255);
+  LedColorGreen = map(humidity, 50, 100, 255, 0);
+  LedColorBlue = 0; 
 
   // Set the color of the RGB LED
-  analogWrite(redPin, redValue);
-  analogWrite(greenPin, greenValue);
-  analogWrite(bluePin, blueValue);
+  analogWrite(redPin, LedColorRed);
+  analogWrite(greenPin, LedColorGreen);
+  analogWrite(bluePin, LedColorBlue);
 }
 
 void readMQ2Values() {
   MQ2.update();
 
-  float CO = MQ2.readSensor(); // Read LPG concentration in ppm
+  coValue = MQ2.readSensor(); // Read LPG concentration in ppm
 
   Serial.print("CO concentration: ");
-  Serial.print(CO);
+  Serial.print(coValue);
   Serial.println(" ppm (parts per million)");
 
-  if (CO < 10) {
+  if (coValue < 10) {
     analogWrite(BUZZER_PIN, 5);
   } else {
     analogWrite(BUZZER_PIN, LOW);
+  }
+
+  client.publish("danielo/co", String(coValue).c_str());
+}
+
+void wifiConnect() {
+  Serial.println("Connecting to WiFi...");
+  WiFi.begin(ssid, password);
+
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  // Print local IP address
+  Serial.println("\nConnected to WiFi.");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void handleRoot() {
+  String html = "<!DOCTYPE html><html><head>";
+  html += "<meta charset=\"UTF-8\">";
+  html += "<title>Données capteurs</title>";
+  html += "<style> body { font-family: Arial, sans-serif; }";
+  html += "h1 { color: #333; }";
+  html += "p { color: #666; }";
+  html += "input[type=\"number\"] { width: 50px; background-color: #f9f9f9; border: 1px solid #ccc; padding: 5px; }";
+  html += "input[type=\"submit\"] { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; }";
+  html += "input[type=\"submit\"]:hover { background-color: #45a049; }";
+  html += "form { margin-top: 20px; }";
+  html += "</style>";
+  html += "</head><body>";
+  html += "<h1>Données capteurs</h1>";
+  html += "<p>Température: <span id=\"temperature\">Chargement...</span> &deg;C</p>";
+  html += "<p>Humidité: <span id=\"humidity\">Chargement...</span> %</p>";
+  html += "<p>MQ2 valeur CO: <span id=\"mq2Value\">Chargement...</span> ppm</p>";
+  html += "<div><p>LED color: </p> <div id=\"ledColor\">Chargement...</div> ppm</div>";
+  html += "<h1>LED</h1>";
+  html += "<form action=\"/led\" method=\"get\">";
+  html += "Rouge: <input type=\"number\" name=\"red\" min=\"0\" max=\"255\"><br>";
+  html += "Vert: <input type=\"number\" name=\"green\" min=\"0\" max=\"255\"><br>";
+  html += "<input type=\"submit\" value=\"Appliquer\">";
+  html += "</form>";
+  html += "<script>";
+  html += "function fetchSensorData() {";
+  html += "  fetch('/sensor').then(response => response.json()).then(data => {";
+  html += "    document.getElementById('temperature').innerText = data.temperature;";
+  html += "    document.getElementById('humidity').innerText = data.humidity;";
+  html += "    document.getElementById('mq2Value').innerText = data.mq2Value;";
+  html += "    document.getElementById('ledColor').style.backgroundColor = data.led";
+  html += "  });";
+  html += "}";
+  html += "setInterval(fetchSensorData, 2000);";
+  html += "</script>";
+  html += "</body></html>";
+
+  // Envoyer la page au client
+  server.send(200, "text/html", html);
+}
+
+void handleSensorData() {
+  float temperature = dht.getTemperature();
+  float humidity = dht.getHumidity();
+  float mq2Value = MQ2.readSensor();
+
+  String json = "{";
+  json += "\"temperature\":";
+  if (isnan(temperature)) {
+    json += "\"Erreur\"";
+  } else {
+    json += String(temperature);
+  }
+  json += ",";
+
+  json += "\"humidity\":";
+  if (isnan(humidity)) {
+    json += "\"Erreur\"";
+  } else {
+    json += String(humidity);
+  }
+  json += ",";
+
+  json += "\"mq2Value\":";
+  if (isnan(mq2Value)) {
+    json += "\"Erreur\"";
+  } else {
+    json += String(mq2Value);
+  }
+
+  json += ",";
+  // convert rgb value into hex
+  String hexaValue = "#";
+  hexaValue += String(LedColorRed, HEX);
+  hexaValue += String(LedColorGreen, HEX);
+  hexaValue += String(LedColorBlue, HEX);
+  
+  json += "\"led\":";
+  json += hexaValue;
+  
+  
+  // json += "{";
+  // json += "\"red\":";
+  // json += String(LedColorRed);
+  // json += ",";
+  // json += "\"green\":";
+  // json += String(LedColorGreen);
+  // json += ",";
+  // json += "\"blue\":";
+  // json += String(LedColorBlue);
+  // json += "}";
+
+  json += "}";
+  server.send(200, "application/json", json);
+}
+
+void initServer() {
+    server.on("/", handleRoot);
+  // server.on("/led", handleLedChange);
+  server.on("/sensor", handleSensorData);
+  server.begin();
+  Serial.println("Serveur HTTP démarré");
+}
+
+void getTempHumidity() {
+  if (dht.getStatus() != 0) {
+    Serial.println("Erreur lors de la lecture du capteur DHT22");
+    snprintf(dht22Values, sizeof(dht22Values), "Erreur DHT22");
+    return;
+  } else {
+    float humidity = dht.getHumidity();
+    float temperature = dht.getTemperature();
+    snprintf(dht22Values, sizeof(dht22Values), "%.1fC %.1f%%", temperature, humidity);
+
+    client.publish("danielo/temperature", String(temperature).c_str());
+    client.publish("danielo/humidity", String(humidity).c_str());
+  }
+}
+
+void mqttConnect() {
+  client.setServer(mqtt_server, mqtt_port);
+
+  while (!client.connected()) {
+    Serial.print("Connecting to MQTT...");
+    if (client.connect("ESP8266ClientDanielo", mqtt_user, mqtt_password)) {
+      Serial.println("connected");
+    } else {
+      Serial.print("failed with state ");
+      Serial.print(client.state());
+      delay(2000);
+    }
   }
 }
 
@@ -130,12 +309,19 @@ void setup() {
 
   setUpMQ2();
 
+  wifiConnect();
+
+  initServer();
+
+  mqttConnect();
+
   interval = dht.getMinimumSamplingPeriod();
 }
 
 void loop() {
   unsigned long currentMillis = millis();
-  
+  server.handleClient();
+
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
     Serial.println("\n\n\n\n\n=====================================");
@@ -146,6 +332,9 @@ void loop() {
     int humidity = readDHT22Values();
     
     setLedRGBColor(humidity);
+
+    getTempHumidity();
+
     Serial.println("=====================================");
   }
 }
