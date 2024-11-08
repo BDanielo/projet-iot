@@ -19,7 +19,6 @@ const int photoSensorPin = 35;
 #define MQ2_PIN 34
 #define BUZZER_PIN 27
 
-
 /************************ Hardware Related Macros ****************************/
 #define Board                   ("ESP32")
 #define Pin                     (34)  // Analog input pin connected to MQ-2
@@ -30,23 +29,10 @@ const int photoSensorPin = 35;
 
 MQUnifiedsensor MQ2(Board, Voltage_Resolution, ADC_Bit_Resolution, Pin, Type);
 
-void setup() {
-  Serial.begin(9600);
+unsigned long previousMillis = 0;
+unsigned long interval;
 
-  delay(1000); // Allow system to stabilize
-
-  Serial.println("Initializing hardware version hw486...");
-  dht.setup(DHT_PIN, DHTesp::DHT22); // Connect DHT sensor to DHT_PIN
-
-  // Initialize the RGB LED pins as outputs
-  pinMode(redPin, OUTPUT);
-  pinMode(greenPin, OUTPUT);
-  pinMode(bluePin, OUTPUT);
-
-  // Initialize the photo sensor pin as input
-  pinMode(photoSensorPin, INPUT);
-  pinMode(BUZZER_PIN, OUTPUT);
-
+void setUpMQ2() {
   // Initialize the MQ2 sensor
   MQ2.setRegressionMethod(1); // Set regression method to linear
   MQ2.setA(36974); // Set A value for MQ2
@@ -76,8 +62,40 @@ void setup() {
   MQ2.init();
 }
 
-void loop() {
-  delay(dht.getMinimumSamplingPeriod());
+void readPhotoSensorValues() {
+  // Read the value from the photo sensor
+  int photoSensorValue = analogRead(photoSensorPin);
+  Serial.println("Photo sensor value: " + String(map(photoSensorValue, 2000, 0, 0, 100)) + " %");
+
+}
+
+int readDHT22Values() {
+  float temperature = dht.getTemperature();
+  float humidity = dht.getHumidity();
+
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return 0;
+  }
+
+  Serial.println("Humidity: " + String(humidity) + " %");
+  Serial.print("Temperature: " + String(temperature) + " °C\n");
+
+  return humidity;
+}
+
+void setLedRGBColor(int humidity) {
+  int redValue = map(humidity, 50, 100, 0, 255);
+  int greenValue = map(humidity, 50, 100, 255, 0);
+  int blueValue = 0; 
+
+  // Set the color of the RGB LED
+  analogWrite(redPin, redValue);
+  analogWrite(greenPin, greenValue);
+  analogWrite(bluePin, blueValue);
+}
+
+void readMQ2Values() {
   MQ2.update();
 
   float CO = MQ2.readSensor(); // Read LPG concentration in ppm
@@ -91,28 +109,43 @@ void loop() {
   } else {
     analogWrite(BUZZER_PIN, LOW);
   }
+}
 
-  float temperature = dht.getTemperature();
-  float humidity = dht.getHumidity();
+void setup() {
+  Serial.begin(9600);
 
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("Failed to read from DHT sensor!");
-    return;
+  delay(1000); // Allow system to stabilize
+
+  Serial.println("Initializing hardware version hw486...");
+  dht.setup(DHT_PIN, DHTesp::DHT22); // Connect DHT sensor to DHT_PIN
+
+  // Initialize the RGB LED pins as outputs
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+
+  // Initialize the photo sensor pin as input
+  pinMode(photoSensorPin, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  setUpMQ2();
+
+  interval = dht.getMinimumSamplingPeriod();
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+  
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    Serial.println("\n\n\n\n\n=====================================");
+    readMQ2Values();
+    
+    readPhotoSensorValues();
+    
+    int humidity = readDHT22Values();
+    
+    setLedRGBColor(humidity);
+    Serial.println("=====================================");
   }
-
-  Serial.println("Humidity: " + String(humidity) + " %");
-  Serial.print("Temperature: " + String(temperature) + " °C\n");
-
-  int redValue = map(humidity, 50, 100, 0, 255);
-  int greenValue = map(humidity, 50, 100, 255, 0);
-  int blueValue = 0; 
-
-  // Set the color of the RGB LED
-  analogWrite(redPin, redValue);
-  analogWrite(greenPin, greenValue);
-  analogWrite(bluePin, blueValue);
-
-  // Read the value from the photo sensor
-  int photoSensorValue = analogRead(photoSensorPin);
-  Serial.println("Photo sensor value: " + String(map(photoSensorValue, 2000, 0, 0, 100)) + " %");
 }
