@@ -61,34 +61,61 @@ unsigned long coValue = 0;
 
 boolean isOverrideLed = false;
 
-void setUpMQ2() {
+// State variables for non-blocking timing
+enum State { INIT, CALIBRATING_MQ2, WIFI_CONNECTING, MQTT_CONNECTING, RUNNING };
+State currentState = INIT;
+
+float calcR0 = 0;
+int calibrationStep = 0;
+unsigned long lastCalibrationTime = 0;
+
+boolean wifiConnecting = false;
+unsigned long lastWifiCheck = 0;
+
+unsigned long lastMqttAttempt = 0;
+
+void setUpMQ2_Init() {
   // Initialize the MQ2 sensor
   MQ2.setRegressionMethod(1); // Set regression method to linear
   MQ2.setA(36974); // Set A value for MQ2
   MQ2.setB(-3.109); // Set B value for MQ2
-  // MQ2.init();
 
   Serial.print("Calibrating MQ2 sensor...");
-  float calcR0 = 0;
-  for (int i = 1; i <= 10; i++) {
+
+  // Initialize variables for calibration
+  calcR0 = 0;
+  calibrationStep = 0;
+  lastCalibrationTime = millis();
+}
+
+boolean setUpMQ2_Calibrate() {
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastCalibrationTime >= 1000) {
+    lastCalibrationTime = currentMillis;
     MQ2.update(); // Update readings
     calcR0 += MQ2.calibrate(RatioMQ2CleanAir);
     Serial.print(".");
-    delay(1000);
+
+    calibrationStep++;
+
+    if (calibrationStep >= 10) {
+      MQ2.setR0(calcR0 / 10); // Set the average R0
+      Serial.println(" done!");
+
+      if (isnan(MQ2.getR0())) {
+        Serial.println("Error: R0 is NaN, check your wiring and connections.");
+        while (1);
+      }
+
+      Serial.print("Calibration completed. R0 = ");
+      Serial.println(MQ2.getR0());
+
+      // Allow time for the sensor to heat up and stabilize
+      MQ2.init();
+      return true; // Calibration is complete
+    }
   }
-  MQ2.setR0(calcR0 / 10); // Set the average R0
-  Serial.println(" done!");
-
-  if (isnan(MQ2.getR0())) {
-    Serial.println("Error: R0 is NaN, check your wiring and connections.");
-    while (1);
-  }
-
-  Serial.print("Calibration completed. R0 = ");
-  Serial.println(MQ2.getR0());
-
-  // Allow time for the sensor to heat up and stabilize
-  MQ2.init();
+  return false; // Calibration is not complete yet
 }
 
 void readPhotoSensorValues() {
@@ -145,20 +172,29 @@ void readMQ2Values() {
   client.publish("danielo/co", String(coValue).c_str());
 }
 
-void wifiConnect() {
-  Serial.println("Connecting to WiFi...");
-  WiFi.begin(ssid, password);
+boolean wifiConnect_NonBlocking() {
+  unsigned long currentMillis = millis();
 
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  if (!wifiConnecting) {
+    Serial.println("Connecting to WiFi...");
+    WiFi.begin(ssid, password);
+    wifiConnecting = true;
+    lastWifiCheck = currentMillis;
   }
 
-  // Print local IP address
-  Serial.println("\nConnected to WiFi.");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+    // Print local IP address
+    Serial.println("\nConnected to WiFi.");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
+    return true; // WiFi connected
+  } else {
+    if (currentMillis - lastWifiCheck >= 500) {
+      lastWifiCheck = currentMillis;
+      Serial.print(".");
+    }
+    return false; // WiFi not connected yet
+  }
 }
 
 void handleRoot() {
@@ -178,7 +214,6 @@ void handleRoot() {
   html += "<p>Température: <span id=\"temperature\">Chargement...</span> &deg;C</p>";
   html += "<p>Humidité: <span id=\"humidity\">Chargement...</span> %</p>";
   html += "<p>MQ2 valeur CO: <span id=\"mq2Value\">Chargement...</span> ppm</p>";
-  html += "<div><p>LED color: </p> <div id=\"ledColor\">Chargement...</div> ppm</div>";
   html += "<h1>LED</h1>";
   html += "<form action=\"/led\" method=\"get\">";
   html += "Rouge: <input type=\"number\" name=\"red\" min=\"0\" max=\"255\"><br>";
@@ -191,14 +226,13 @@ void handleRoot() {
   html += "    document.getElementById('temperature').innerText = data.temperature;";
   html += "    document.getElementById('humidity').innerText = data.humidity;";
   html += "    document.getElementById('mq2Value').innerText = data.mq2Value;";
-  html += "    document.getElementById('ledColor').style.backgroundColor = data.led";
   html += "  });";
   html += "}";
   html += "setInterval(fetchSensorData, 2000);";
   html += "</script>";
   html += "</body></html>";
 
-  // Envoyer la page au client
+  // Send the page to the client
   server.send(200, "text/html", html);
 }
 
@@ -230,55 +264,54 @@ void handleSensorData() {
   } else {
     json += String(mq2Value);
   }
-
-  json += ",";
-  // convert rgb value into hex
-  String hexaValue = "#";
-  hexaValue += String(LedColorRed, HEX);
-  hexaValue += String(LedColorGreen, HEX);
-  hexaValue += String(LedColorBlue, HEX);
-  
-  json += "\"led\":";
-  json += hexaValue;
-  
-  
-  // json += "{";
-  // json += "\"red\":";
-  // json += String(LedColorRed);
-  // json += ",";
-  // json += "\"green\":";
-  // json += String(LedColorGreen);
-  // json += ",";
-  // json += "\"blue\":";
-  // json += String(LedColorBlue);
-  // json += "}";
-
   json += "}";
   server.send(200, "application/json", json);
 }
 
+void handleLedChange() {
+  if (server.hasArg("red") && server.hasArg("green")) {
+    isOverrideLed = true;
+    int redValue = server.arg("red").toInt();
+    int greenValue = server.arg("green").toInt();
+    Serial.printf("Setting LED color to R:%d G:%d\n", redValue, greenValue);
+    analogWrite(redPin, redValue);
+    analogWrite(greenPin, greenValue);
+    server.send(200, "text/plain", "Valeur de la LED modifiée");
+  } else {
+    server.send(400, "text/plain", "Paramètres red ou green manquants");
+        isOverrideLed = false;
+
+  }
+}
+
 void initServer() {
-    server.on("/", handleRoot);
-  // server.on("/led", handleLedChange);
+  server.on("/", handleRoot);
+  server.on("/led", handleLedChange);
   server.on("/sensor", handleSensorData);
   server.begin();
   Serial.println("Serveur HTTP démarré");
 }
 
-void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Connexion au broker MQTT...");
-    String clientId = "ESP32Client-";
-    clientId += String(random(0xffff), HEX);
-    if (client.connect(clientId.c_str())) {
-      Serial.println("connecté");
-      client.subscribe("danielo/buzzer");
-    } else {
-      Serial.print("échec, rc=");
-      Serial.print(client.state());
-      Serial.println(" nouvelle tentative dans 5 secondes");
-      delay(5000);
+boolean mqttConnect_NonBlocking() {
+  unsigned long currentMillis = millis();
+
+  if (client.connected()) {
+    return true; // MQTT connected
+  } else {
+    if (currentMillis - lastMqttAttempt >= 2000) {
+      lastMqttAttempt = currentMillis;
+      Serial.print("Connecting to MQTT...");
+      if (client.connect("ESP8266ClientDanielo", mqtt_user, mqtt_password)) {
+        Serial.println("connected");
+        client.subscribe("danielo/buzzer");
+        client.subscribe("danielo/led");
+        return true; // MQTT connected
+      } else {
+        Serial.print("failed with state ");
+        Serial.println(client.state());
+      }
     }
+    return false; // MQTT not connected yet
   }
 }
 
@@ -337,30 +370,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-void mqttConnect() {
-  client.setServer(mqtt_server, mqtt_port);
-  client.setCallback(callback);
-
-  while (!client.connected()) {
-    Serial.print("Connecting to MQTT...");
-    if (client.connect("ESP8266ClientDanielo", mqtt_user, mqtt_password)) {
-      Serial.println("connected");
-      client.subscribe("danielo/buzzer");
-      client.subscribe("danielo/led");
-    } else {
-      Serial.print("failed with state ");
-      Serial.print(client.state());
-      delay(2000);
-    }
-  }
-}
-
 void setup() {
   Serial.begin(9600);
-
-  delay(1000); // Allow system to stabilize
-
   Serial.println("Initializing hardware version hw486...");
+
+  // Initialize DHT sensor
   dht.setup(DHT_PIN, DHTesp::DHT22); // Connect DHT sensor to DHT_PIN
 
   // Initialize the RGB LED pins as outputs
@@ -372,15 +386,11 @@ void setup() {
   pinMode(photoSensorPin, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
 
-  setUpMQ2();
+  // Initialize variables
+  currentState = INIT;
 
-  wifiConnect();
-
-  initServer();
-
-  mqttConnect();
-
-  interval = dht.getMinimumSamplingPeriod();
+  client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(callback);
 }
 
 void loop() {
@@ -388,19 +398,49 @@ void loop() {
   server.handleClient();
   client.loop();
 
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    Serial.println("\n\n\n\n\n=====================================");
-    readMQ2Values();
-    
-    readPhotoSensorValues();
-    
-    int humidity = readDHT22Values();
-    
-    setLedRGBColor(humidity);
+  switch (currentState) {
+    case INIT:
+      setUpMQ2_Init();
+      currentState = CALIBRATING_MQ2;
+      break;
 
-    getTempHumidity();
+    case CALIBRATING_MQ2:
+      if (setUpMQ2_Calibrate()) {
+        currentState = WIFI_CONNECTING;
+      }
+      break;
 
-    Serial.println("=====================================");
+    case WIFI_CONNECTING:
+      if (wifiConnect_NonBlocking()) {
+        currentState = MQTT_CONNECTING;
+        initServer(); // Start server after WiFi is connected
+      }
+      break;
+
+    case MQTT_CONNECTING:
+      if (mqttConnect_NonBlocking()) {
+        interval = dht.getMinimumSamplingPeriod();
+        previousMillis = currentMillis;
+        currentState = RUNNING;
+      }
+      break;
+
+    case RUNNING:
+      if (!client.connected()) {
+        currentState = MQTT_CONNECTING;
+        break;
+      }
+
+      if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
+        Serial.println("\n\n\n\n\n=====================================");
+        readMQ2Values();
+        readPhotoSensorValues();
+        int humidity = readDHT22Values();
+        setLedRGBColor(humidity);
+        getTempHumidity();
+        Serial.println("=====================================");
+      }
+      break;
   }
 }
