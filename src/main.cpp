@@ -59,6 +59,8 @@ char mq2Values[32];
 
 unsigned long coValue = 0;
 
+boolean isOverrideLed = false;
+
 void setUpMQ2() {
   // Initialize the MQ2 sensor
   MQ2.setRegressionMethod(1); // Set regression method to linear
@@ -112,14 +114,17 @@ int readDHT22Values() {
 }
 
 void setLedRGBColor(int humidity) {
-  LedColorRed = map(humidity, 50, 100, 0, 255);
-  LedColorGreen = map(humidity, 50, 100, 255, 0);
-  LedColorBlue = 0; 
+  if (!isOverrideLed)
+  {
+    LedColorRed = map(humidity, 50, 100, 0, 255);
+    LedColorGreen = map(humidity, 50, 100, 255, 0);
+    LedColorBlue = 0; 
 
-  // Set the color of the RGB LED
-  analogWrite(redPin, LedColorRed);
-  analogWrite(greenPin, LedColorGreen);
-  analogWrite(bluePin, LedColorBlue);
+    // Set the color of the RGB LED
+    analogWrite(redPin, LedColorRed);
+    analogWrite(greenPin, LedColorGreen);
+    analogWrite(bluePin, LedColorBlue);
+  }
 }
 
 void readMQ2Values() {
@@ -260,6 +265,23 @@ void initServer() {
   Serial.println("Serveur HTTP démarré");
 }
 
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Connexion au broker MQTT...");
+    String clientId = "ESP32Client-";
+    clientId += String(random(0xffff), HEX);
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connecté");
+      client.subscribe("danielo/buzzer");
+    } else {
+      Serial.print("échec, rc=");
+      Serial.print(client.state());
+      Serial.println(" nouvelle tentative dans 5 secondes");
+      delay(5000);
+    }
+  }
+}
+
 void getTempHumidity() {
   if (dht.getStatus() != 0) {
     Serial.println("Erreur lors de la lecture du capteur DHT22");
@@ -275,13 +297,56 @@ void getTempHumidity() {
   }
 }
 
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message reçu sur le topic [");
+  Serial.print(topic);
+  Serial.print("] : ");
+  String message;
+
+  for (int i = 0; i < length; i++) {
+    message += (char)payload[i];
+  }
+  Serial.println(message);
+
+  // Vérifier le contenu du message pour déclencher le buzzer
+  if (String(topic) == "danielo/buzzer") {
+    if (message == "ON") {
+      // Activer le buzzer
+      analogWrite(BUZZER_PIN, 5);
+      Serial.println("Buzzer activé");
+    } else if (message == "OFF") {
+      // Désactiver le buzzer
+      analogWrite(BUZZER_PIN, 0);
+      Serial.println("Buzzer désactivé");
+    }
+  }
+
+  if (String(topic) == "danielo/led") {
+    isOverrideLed = true;
+    int r, g, b;
+    if (sscanf(message.c_str(), "rgb(%d, %d, %d)", &r, &g, &b) == 3) {
+      analogWrite(redPin, r);
+      analogWrite(greenPin, g);
+      analogWrite(bluePin, b);
+      Serial.printf("LED color set to R:%d G:%d B:%d\n", r, g, b);
+    } else {
+      Serial.println("Invalid RGB format");
+    }
+  } else {
+    isOverrideLed = false;
+  }
+}
+
 void mqttConnect() {
   client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(callback);
 
   while (!client.connected()) {
     Serial.print("Connecting to MQTT...");
     if (client.connect("ESP8266ClientDanielo", mqtt_user, mqtt_password)) {
       Serial.println("connected");
+      client.subscribe("danielo/buzzer");
+      client.subscribe("danielo/led");
     } else {
       Serial.print("failed with state ");
       Serial.print(client.state());
@@ -321,6 +386,7 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
   server.handleClient();
+  client.loop();
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
