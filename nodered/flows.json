@@ -1,0 +1,709 @@
+[
+    {
+        "id": "1c3b426a.eb3666",
+        "type": "tab",
+        "label": "Flow 2",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "8ee798bff4caa2e3",
+        "type": "mqtt-broker",
+        "name": "hivemq",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "5",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "d892088cb74233b9",
+        "type": "ui_tab",
+        "d": true,
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "9469f019ff3cecab",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "test",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "4233a49c6bed78ab",
+        "type": "ui_group",
+        "name": "Default",
+        "tab": "d892088cb74233b9",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "64b07586.8c0c44",
+        "type": "ui_group",
+        "name": "Standard",
+        "tab": "d338eebb.4a506",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "d338eebb.4a506",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "ce01d596e07ff21f",
+        "type": "ui_group",
+        "name": "Graphiques",
+        "tab": "d338eebb.4a506",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "5c4ba603873737d4",
+        "type": "ui_group",
+        "name": "Buzzer",
+        "tab": "d338eebb.4a506",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "a92499d9e5e24cc6",
+        "type": "ui_group",
+        "name": "LED",
+        "tab": "d338eebb.4a506",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "87a7ad6e.84f4c8",
+        "type": "ui_gauge",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "64b07586.8c0c44",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Température",
+        "label": "C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "40",
+        "colors": [
+            "#0080ff",
+            "#00ff00",
+            "#ca3838"
+        ],
+        "seg1": "18",
+        "seg2": "28",
+        "diff": false,
+        "className": "",
+        "x": 590,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "fb9ce3ce4ac3af22",
+        "type": "mqtt in",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "topic": "danielo/temperature",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "8ee798bff4caa2e3",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 370,
+        "y": 340,
+        "wires": [
+            [
+                "87a7ad6e.84f4c8",
+                "655ee60c41566d1a"
+            ]
+        ]
+    },
+    {
+        "id": "13914f15daa7fb20",
+        "type": "ui_gauge",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "64b07586.8c0c44",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Humidité",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#b50000",
+            "#28e600",
+            "#ca3838"
+        ],
+        "seg1": "40",
+        "seg2": "60",
+        "diff": false,
+        "className": "",
+        "x": 580,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "b59c9e820a7fdc99",
+        "type": "mqtt in",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "topic": "danielo/humidity",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "8ee798bff4caa2e3",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 360,
+        "y": 460,
+        "wires": [
+            [
+                "13914f15daa7fb20",
+                "d2942f5193f558a3"
+            ]
+        ]
+    },
+    {
+        "id": "c28d3dcbe66aaba4",
+        "type": "ui_gauge",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "64b07586.8c0c44",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "CO",
+        "label": "ppm",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "200",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "10",
+        "seg2": "35",
+        "diff": false,
+        "className": "",
+        "x": 570,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "37090f3c453b2fad",
+        "type": "mqtt in",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "topic": "danielo/co",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "8ee798bff4caa2e3",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 340,
+        "y": 580,
+        "wires": [
+            [
+                "c28d3dcbe66aaba4",
+                "662b73ce6276f169"
+            ]
+        ]
+    },
+    {
+        "id": "012ae0f2e2d17674",
+        "type": "ui_gauge",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "64b07586.8c0c44",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Lumiére",
+        "label": "",
+        "format": "{{value}}",
+        "min": "0",
+        "max": "2200",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "200",
+        "seg2": "500",
+        "diff": false,
+        "className": "",
+        "x": 580,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "aade27aa4b6c2ab2",
+        "type": "mqtt in",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "topic": "danielo/lumen",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "8ee798bff4caa2e3",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 350,
+        "y": 680,
+        "wires": [
+            [
+                "012ae0f2e2d17674",
+                "5ffee4642274fc6c"
+            ]
+        ]
+    },
+    {
+        "id": "655ee60c41566d1a",
+        "type": "ui_chart",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "ce01d596e07ff21f",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "Température graphique",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 630,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d2942f5193f558a3",
+        "type": "ui_chart",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "ce01d596e07ff21f",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "Humidité graphique",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 610,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "662b73ce6276f169",
+        "type": "ui_chart",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "ce01d596e07ff21f",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "CO graphique",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 600,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5ffee4642274fc6c",
+        "type": "ui_chart",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "ce01d596e07ff21f",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "Lumiére graphique",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 610,
+        "y": 640,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a2bbed3741c6328f",
+        "type": "ui_button",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "5c4ba603873737d4",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "ON",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "ON",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 330,
+        "y": 780,
+        "wires": [
+            [
+                "815455fd060c645a"
+            ]
+        ]
+    },
+    {
+        "id": "815455fd060c645a",
+        "type": "mqtt out",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "topic": "danielo/buzzer",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "8ee798bff4caa2e3",
+        "x": 580,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "eebb5b89c65328c7",
+        "type": "ui_button",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "group": "5c4ba603873737d4",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "OFF",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "OFF",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 330,
+        "y": 820,
+        "wires": [
+            [
+                "815455fd060c645a"
+            ]
+        ]
+    },
+    {
+        "id": "da4a7a006eaf4e12",
+        "type": "ui_colour_picker",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "label": "RGB",
+        "group": "a92499d9e5e24cc6",
+        "format": "rgb",
+        "outformat": "string",
+        "showSwatch": true,
+        "showPicker": false,
+        "showValue": false,
+        "showHue": false,
+        "showAlpha": false,
+        "showLightness": true,
+        "square": "false",
+        "dynOutput": "false",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 330,
+        "y": 880,
+        "wires": [
+            [
+                "de7b4762a4c017e7"
+            ]
+        ]
+    },
+    {
+        "id": "de7b4762a4c017e7",
+        "type": "mqtt out",
+        "z": "1c3b426a.eb3666",
+        "name": "",
+        "topic": "danielo/led",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "8ee798bff4caa2e3",
+        "x": 530,
+        "y": 880,
+        "wires": []
+    }
+]
